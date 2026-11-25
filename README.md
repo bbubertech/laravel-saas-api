@@ -49,7 +49,7 @@ Tests use an in-memory SQLite database, so they do not touch the MySQL container
 ## Roadmap
 
 - [x] Project setup, Docker environment, CI
-- [ ] Tenants, users and tenant scoping
+- [x] Tenants, users and tenant scoping
 - [ ] JWT auth (login, refresh, logout)
 - [ ] Roles and permissions
 - [ ] Plans, feature flags and usage limits
