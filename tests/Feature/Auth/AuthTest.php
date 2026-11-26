@@ -1,0 +1,85 @@
+<?php
+
+namespace Tests\Feature\Auth;
+
+use App\Models\Tenant;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
+
+class AuthTest extends TestCase
+{
+    use RefreshDatabase;
+
+    public function test_registering_creates_a_company_and_its_owner(): void
+    {
+        $response = $this->postJson('/api/v1/auth/register', [
+            'company_name' => 'Acme Logistics',
+            'name' => 'Jane Doe',
+            'email' => 'jane@acme.test',
+            'password' => 'secret-password',
+            'password_confirmation' => 'secret-password',
+        ]);
+
+        $response->assertCreated()->assertJsonStructure(['data' => ['access_token', 'token_type', 'expires_in']]);
+
+        $tenant = Tenant::where('slug', 'acme-logistics')->firstOrFail();
+        $this->assertDatabaseHas('users', ['email' => 'jane@acme.test', 'tenant_id' => $tenant->id]);
+    }
+
+    public function test_registration_is_validated(): void
+    {
+        $this->postJson('/api/v1/auth/register', ['email' => 'not-an-email'])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['company_name', 'name', 'email', 'password']);
+    }
+
+    public function test_user_can_log_in_and_read_their_profile(): void
+    {
+        $user = User::factory()->create(['password' => 'secret-password']);
+
+        $token = $this->postJson('/api/v1/auth/login', [
+            'email' => $user->email,
+            'password' => 'secret-password',
+        ])->assertOk()->json('data.access_token');
+
+        $this->withToken($token)->getJson('/api/v1/auth/me')
+            ->assertOk()
+            ->assertJsonPath('data.email', $user->email)
+            ->assertJsonPath('data.tenant.id', $user->tenant_id);
+    }
+
+    public function test_wrong_password_is_rejected(): void
+    {
+        $user = User::factory()->create(['password' => 'secret-password']);
+
+        $this->postJson('/api/v1/auth/login', [
+            'email' => $user->email,
+            'password' => 'wrong-password',
+        ])->assertUnauthorized();
+    }
+
+    public function test_token_can_be_refreshed_and_revoked(): void
+    {
+        $user = User::factory()->create(['password' => 'secret-password']);
+        $token = $this->postJson('/api/v1/auth/login', [
+            'email' => $user->email,
+            'password' => 'secret-password',
+        ])->json('data.access_token');
+
+        $fresh = $this->withToken($token)->postJson('/api/v1/auth/refresh')->assertOk()->json('data.access_token');
+        $this->assertNotSame($token, $fresh);
+
+        $this->withToken($fresh)->postJson('/api/v1/auth/logout')->assertOk();
+
+        $this->flushHeaders();
+        $this->app['auth']->forgetGuards();
+        $this->withToken($fresh)->getJson('/api/v1/auth/me')->assertUnauthorized();
+    }
+
+    public function test_protected_routes_require_a_token(): void
+    {
+        $this->getJson('/api/v1/auth/me')->assertUnauthorized();
+        $this->getJson('/api/v1/customers')->assertUnauthorized();
+    }
+}

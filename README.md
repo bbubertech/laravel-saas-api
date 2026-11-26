@@ -50,7 +50,7 @@ Tests use an in-memory SQLite database, so they do not touch the MySQL container
 
 - [x] Project setup, Docker environment, CI
 - [x] Tenants, users and tenant scoping
-- [ ] JWT auth (login, refresh, logout)
+- [x] JWT auth (login, refresh, logout)
 - [ ] Roles and permissions
 - [ ] Plans, feature flags and usage limits
 - [ ] Audit log
