@@ -59,27 +59,38 @@ class AuthTest extends TestCase
         ])->assertUnauthorized();
     }
 
-    public function test_token_can_be_refreshed_and_revoked(): void
+    public function test_token_can_be_refreshed(): void
     {
-        $user = User::factory()->create(['password' => 'secret-password']);
-        $token = $this->postJson('/api/v1/auth/login', [
-            'email' => $user->email,
-            'password' => 'secret-password',
-        ])->json('data.access_token');
+        $token = $this->loginAs(User::factory()->create(['password' => 'secret-password']));
 
         $fresh = $this->withToken($token)->postJson('/api/v1/auth/refresh')->assertOk()->json('data.access_token');
+
         $this->assertNotSame($token, $fresh);
+    }
 
-        $this->withToken($fresh)->postJson('/api/v1/auth/logout')->assertOk();
+    public function test_logout_revokes_the_token(): void
+    {
+        $token = $this->loginAs(User::factory()->create(['password' => 'secret-password']));
 
+        $this->withToken($token)->postJson('/api/v1/auth/logout')->assertOk();
+
+        // Each HTTP request in production starts with a fresh guard; do the same here.
         $this->flushHeaders();
         $this->app['auth']->forgetGuards();
-        $this->withToken($fresh)->getJson('/api/v1/auth/me')->assertUnauthorized();
+        $this->withToken($token)->getJson('/api/v1/auth/me')->assertUnauthorized();
     }
 
     public function test_protected_routes_require_a_token(): void
     {
         $this->getJson('/api/v1/auth/me')->assertUnauthorized();
         $this->getJson('/api/v1/customers')->assertUnauthorized();
+    }
+
+    private function loginAs(User $user): string
+    {
+        return $this->postJson('/api/v1/auth/login', [
+            'email' => $user->email,
+            'password' => 'secret-password',
+        ])->json('data.access_token');
     }
 }
