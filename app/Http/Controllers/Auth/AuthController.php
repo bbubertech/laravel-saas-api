@@ -8,6 +8,7 @@ use App\Http\Requests\Auth\RegisterRequest;
 use App\Http\Resources\UserResource;
 use App\Models\Tenant;
 use App\Models\User;
+use App\Support\Authorization\DefaultRoles;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -20,18 +21,21 @@ class AuthController extends Controller
     /**
      * Create a company together with its first user, who becomes the owner.
      */
-    public function register(RegisterRequest $request): JsonResponse
+    public function register(RegisterRequest $request, DefaultRoles $defaultRoles): JsonResponse
     {
         $data = $request->validated();
 
-        $user = DB::transaction(function () use ($data) {
+        $user = DB::transaction(function () use ($data, $defaultRoles) {
             $tenant = Tenant::create([
                 'name' => $data['company_name'],
                 'slug' => $this->uniqueSlug($data['company_name']),
             ]);
 
+            $roles = $defaultRoles->createFor($tenant);
+
             return User::create([
                 'tenant_id' => $tenant->id,
+                'role_id' => $roles['owner']->id,
                 'name' => $data['name'],
                 'email' => $data['email'],
                 'password' => $data['password'],
@@ -64,7 +68,7 @@ class AuthController extends Controller
 
     public function me(Request $request): UserResource
     {
-        return new UserResource($request->user()->load('tenant'));
+        return new UserResource($request->user()->load(['tenant', 'role']));
     }
 
     private function tokenResponse(string $token, int $status = Response::HTTP_OK): JsonResponse

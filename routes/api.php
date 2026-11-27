@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\RoleController;
+use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/ping', fn () => response()->json(['pong' => true]));
@@ -19,4 +21,6 @@ Route::prefix('auth')->group(function () {
 
 Route::middleware(['auth:api', 'tenant'])->group(function () {
     Route::apiResource('customers', CustomerController::class);
+    Route::apiResource('users', UserController::class);
+    Route::get('roles', [RoleController::class, 'index']);
 });

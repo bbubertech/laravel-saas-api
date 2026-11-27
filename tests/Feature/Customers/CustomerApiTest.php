@@ -18,8 +18,7 @@ class CustomerApiTest extends TestCase
     {
         parent::setUp();
 
-        $this->user = User::factory()->create();
-        $this->actingAs($this->user, 'api');
+        $this->user = $this->signIn('owner');
     }
 
     public function test_index_lists_only_own_customers(): void
@@ -80,6 +79,15 @@ class CustomerApiTest extends TestCase
 
         $this->deleteJson("/api/v1/customers/{$customer->id}")->assertNoContent();
         $this->assertModelMissing($customer);
+    }
+
+    public function test_members_cannot_delete_customers(): void
+    {
+        $member = $this->signIn('member', $this->user->tenant);
+        $customer = Customer::factory()->for($member->tenant)->create();
+
+        $this->deleteJson("/api/v1/customers/{$customer->id}")->assertForbidden();
+        $this->getJson('/api/v1/customers')->assertOk();
     }
 
     public function test_customers_of_another_tenant_are_not_reachable(): void

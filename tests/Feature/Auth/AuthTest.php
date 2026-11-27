@@ -24,7 +24,13 @@ class AuthTest extends TestCase
         $response->assertCreated()->assertJsonStructure(['data' => ['access_token', 'token_type', 'expires_in']]);
 
         $tenant = Tenant::where('slug', 'acme-logistics')->firstOrFail();
-        $this->assertDatabaseHas('users', ['email' => 'jane@acme.test', 'tenant_id' => $tenant->id]);
+        $owner = $tenant->roles()->where('slug', 'owner')->firstOrFail();
+        $this->assertDatabaseHas('users', [
+            'email' => 'jane@acme.test',
+            'tenant_id' => $tenant->id,
+            'role_id' => $owner->id,
+        ]);
+        $this->assertSame(3, $tenant->roles()->count());
     }
 
     public function test_registration_is_validated(): void

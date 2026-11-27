@@ -8,9 +8,21 @@ use App\Models\Customer;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 
-class CustomerController extends Controller
+class CustomerController extends Controller implements HasMiddleware
 {
+    public static function middleware(): array
+    {
+        return [
+            new Middleware('can:customers.view', only: ['index', 'show']),
+            new Middleware('can:customers.create', only: ['store']),
+            new Middleware('can:customers.update', only: ['update']),
+            new Middleware('can:customers.delete', only: ['destroy']),
+        ];
+    }
+
     public function index(Request $request): AnonymousResourceCollection
     {
         $customers = Customer::query()

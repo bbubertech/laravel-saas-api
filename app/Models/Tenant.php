@@ -23,6 +23,14 @@ class Tenant extends Model
     }
 
     /**
+     * @return HasMany<Role, $this>
+     */
+    public function roles(): HasMany
+    {
+        return $this->hasMany(Role::class);
+    }
+
+    /**
      * @return HasMany<Customer, $this>
      */
     public function customers(): HasMany
