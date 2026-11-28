@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\Billing\PlanController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\UserController;
@@ -23,4 +24,7 @@ Route::middleware(['auth:api', 'tenant'])->group(function () {
     Route::apiResource('customers', CustomerController::class);
     Route::apiResource('users', UserController::class);
     Route::get('roles', [RoleController::class, 'index']);
+
+    Route::get('billing/plan', [PlanController::class, 'show']);
+    Route::put('billing/plan', [PlanController::class, 'update']);
 });

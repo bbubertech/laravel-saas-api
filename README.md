@@ -52,7 +52,7 @@ Tests use an in-memory SQLite database, so they do not touch the MySQL container
 - [x] Tenants, users and tenant scoping
 - [x] JWT auth (login, refresh, logout)
 - [x] Roles and permissions
-- [ ] Plans, feature flags and usage limits
+- [x] Plans, feature flags and usage limits
 - [ ] Audit log
 - [ ] Bulk import and export on queues
 - [ ] Webhooks with signature checks and retries

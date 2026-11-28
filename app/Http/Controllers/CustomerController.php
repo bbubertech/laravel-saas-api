@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\Customers\CustomerRequest;
 use App\Http\Resources\CustomerResource;
 use App\Models\Customer;
+use App\Support\Billing\Features;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response;
@@ -43,8 +44,10 @@ class CustomerController extends Controller implements HasMiddleware
         return CustomerResource::collection($customers);
     }
 
-    public function store(CustomerRequest $request): CustomerResource
+    public function store(CustomerRequest $request, Features $features): CustomerResource
     {
+        $features->ensureWithinLimit($request->user()->tenant, 'customers', Customer::count());
+
         return new CustomerResource(Customer::create($request->validated()));
     }
 

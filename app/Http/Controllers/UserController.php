@@ -6,6 +6,7 @@ use App\Http\Requests\Users\UserRequest;
 use App\Http\Resources\UserResource;
 use App\Models\Role;
 use App\Models\User;
+use App\Support\Billing\Features;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response;
@@ -39,8 +40,10 @@ class UserController extends Controller implements HasMiddleware
         return new UserResource($user->load('role'));
     }
 
-    public function store(UserRequest $request): UserResource
+    public function store(UserRequest $request, Features $features): UserResource
     {
+        $features->ensureWithinLimit($request->user()->tenant, 'users', User::count());
+
         return new UserResource(User::create($request->validated())->load('role'));
     }
 

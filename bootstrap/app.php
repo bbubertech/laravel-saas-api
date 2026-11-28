@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\EnsureFeatureEnabled;
 use App\Http\Middleware\ForceJsonResponse;
 use App\Http\Middleware\SetTenantFromUser;
 use Illuminate\Foundation\Application;
@@ -19,6 +20,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->alias([
             'tenant' => SetTenantFromUser::class,
+            'feature' => EnsureFeatureEnabled::class,
         ]);
 
         // The tenant has to be known before route model binding runs,

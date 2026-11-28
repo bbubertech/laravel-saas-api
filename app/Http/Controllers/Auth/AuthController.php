@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Auth\RegisterRequest;
 use App\Http\Resources\UserResource;
+use App\Models\Plan;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Support\Authorization\DefaultRoles;
@@ -29,6 +30,7 @@ class AuthController extends Controller
             $tenant = Tenant::create([
                 'name' => $data['company_name'],
                 'slug' => $this->uniqueSlug($data['company_name']),
+                'plan_id' => Plan::where('slug', 'starter')->value('id'),
             ]);
 
             $roles = $defaultRoles->createFor($tenant);
